@@ -48,8 +48,8 @@ typecheck + test.
 
 ## Hard rules
 
-- Never edit: `dist/` (build output), `package.json` `version` (permanent
-  `0.0.0` placeholder), `CHANGELOG.md`, `release-please-config.json`,
+- Never edit: `dist/` (build output), `package.json` `version` (bumped by
+  release-please in each release commit), `CHANGELOG.md`, `release-please-config.json`,
   `.release-please-manifest.json` — release-please owns all of these.
 - No new runtime dependencies without strong justification (currently: `yaml`
   only; `@opencode/plugin` is a peer dep).

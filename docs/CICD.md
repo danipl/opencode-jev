@@ -12,7 +12,7 @@ conventional commit ──push main──▶ release-please opens/updates a Rele
                                         │
                                    merge PR
                                         ▼
-                    CHANGELOG.md + manifest update + tag vX.Y.Z
+        CHANGELOG.md + package.json/manifest bump + tag vX.Y.Z
                     + GitHub Release (all created by release-please)
                                         │
                             release_created == true
@@ -25,23 +25,25 @@ Note the last hop is an explicit `workflow_call` chain inside
 `release-please.yml`, not a tag-push trigger — see
 [Why the publish job is chained](#why-the-publish-job-is-chained).
 
-## Version source of truth: git tags only
+## Version source of truth: the tag; package.json follows it
 
-The **tag is the only place a version is declared**. `package.json` keeps a
-permanent `0.0.0` placeholder and is *never* touched by the release machinery
-(`release-type: generic` — no code files get version edits, so no
-pushback/revert strategies are needed). At publish time, CI stamps the real
-version into `package.json` from the tag, in the runner's ephemeral checkout
-only:
+The **tag `vX.Y.Z` is what the published version comes from**. With
+`release-type: node`, release-please *also* bumps `package.json` +
+`package-lock.json` inside the release commit itself — the "version pushed
+back to the repository" visible in history (e.g.
+`chore(main): release 1.0.0`). The tag and the release commit's
+`package.json` always agree. At publish time, CI re-stamps the version from
+the tag, in the runner's ephemeral checkout only:
 
 ```bash
 npm version "${GITHUB_REF_NAME#v}" --no-git-tag-version --allow-same-version
 ```
 
-Nothing is committed back to the repository. What release-please *does*
-maintain in-repo is its bookkeeping file `.release-please-manifest.json`
-(last released version, used to compute the next bump) and `CHANGELOG.md` —
-neither is a package version declaration.
+On the automated path this is a no-op (the checkout already matches the tag);
+it is the safety net for a human-pushed emergency tag. Nothing extra is
+committed back. release-please's in-repo bookkeeping is
+`.release-please-manifest.json` (last released version, used to compute the
+next bump) and `CHANGELOG.md`.
 
 ## 1. Commits decide the bump
 
@@ -97,8 +99,8 @@ On every push to `main`, `.github/workflows/release-please.yml` runs
 - Once at least one release-worthy commit (`feat:`/breaking) lands, it opens a
   single PR titled `chore: release <version>` that contains:
   - a generated `CHANGELOG.md` entry,
-  - the new version in the release-please manifest.
-  - **No `package.json` edit** — the generic release type touches no code.
+  - the new version in the release-please manifest,
+  - the new version in `package.json` + `package-lock.json` (`release-type: node`).
 - Further qualifying commits merged to `main` are folded into the same open
   PR — its title and changelog update automatically.
 
@@ -143,7 +145,8 @@ It:
 1. `npm ci && npm run build`,
 2. stamps the version from the tag into the ephemeral checkout:
    `npm version "${TAG#v}" --no-git-tag-version --allow-same-version`
-   (nothing is pushed back to the repository),
+   (no-op on the automated path — the release commit already carries it;
+   safety net for emergency human-pushed tags),
 3. `npm publish --provenance --access public --tag latest` using
    `secrets.NPM_TOKEN` — every release moves both addresses users can install:
    the exact version (`@danipl/opencode-jev@0.2.0`) and `latest`
@@ -168,7 +171,7 @@ release-please tags never double-publish).
 | --- | --- |
 | `.github/workflows/release-please.yml` | Runs the release-please action on `main`; chains npm publish on release |
 | `.github/workflows/release.yml` | Builds, stamps version from tag, publishes to npm |
-| `release-please-config.json` | Release strategy (generic — no code version edits, pre-major bumps, plain `v` tags) |
+| `release-please-config.json` | Release strategy (node — bumps package.json/lock in the release commit, pre-major minor bumps, plain `v` tags) |
 | `.release-please-manifest.json` | Last-released version bookkeeping (drives next bump) |
-| `package.json` `version` | Permanent `0.0.0` placeholder — never the source of truth |
+| `package.json` `version` | Bumped by release-please in each release commit — release-please owns it, never hand-edit |
 | `CHANGELOG.md` | Generated on merge of each release PR |
