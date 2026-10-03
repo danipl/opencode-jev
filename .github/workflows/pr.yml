@@ -1,0 +1,60 @@
+name: PR
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  conventional:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Lint commit messages
+        env:
+          EVENT: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          set -euo pipefail
+          re='^(fix|feat|docs|refactor|test|ci|chore|revert)(\([^)]+\))?!?: .+'
+          if [ "$EVENT" = pull_request ]; then
+            range="$PR_BASE..$PR_HEAD"
+          else
+            # push to main; fall back to HEAD alone on force-push/branch start
+            range="$PUSH_BEFORE..$GITHUB_SHA"
+            git merge-base --is-ancestor "$PUSH_BEFORE" "$GITHUB_SHA" 2>/dev/null || range="$GITHUB_SHA^..$GITHUB_SHA"
+          fi
+          fail=0
+          while read -r sha subject; do
+            if ! echo "$subject" | grep -Eq "$re"; then
+              echo "::error::commit $sha ('$subject') is not Conventional Commits. Expected '<type>[optional scope][!]: <description>' with type in fix|feat|docs|refactor|test|ci|chore|revert. fix=patch, feat=minor, feat!/BREAKING CHANGE=major, others=no release."
+              fail=1
+            fi
+          done < <(git log --format='%h %s' "$range")
+          if [ "$EVENT" = pull_request ]; then
+            # squash "Keep PR title only" makes the title the commit on main
+            if ! echo "$PR_TITLE" | grep -Eq "$re"; then
+              echo "::error::PR title ('$PR_TITLE') is not Conventional Commits. On squash-merge it becomes the main commit message and drives the version bump. Same pattern as above."
+              fail=1
+            fi
+          fi
+          exit $fail
+
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
