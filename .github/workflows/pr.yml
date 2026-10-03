@@ -38,7 +38,8 @@ jobs:
               echo "::error::commit $sha ('$subject') is not Conventional Commits. Expected '<type>[optional scope][!]: <description>' with type in fix|feat|docs|refactor|test|ci|chore|revert. fix=patch, feat=minor, feat!/BREAKING CHANGE=major, others=no release."
               fail=1
             fi
-          done < <(git log --format='%h %s' "$range")
+          # squash-only repo: merge commits (e.g. "Update branch") never reach main
+          done < <(git log --no-merges --format='%h %s' "$range")
           if [ "$EVENT" = pull_request ]; then
             # squash "Keep PR title only" makes the title the commit on main
             if ! echo "$PR_TITLE" | grep -Eq "$re"; then
