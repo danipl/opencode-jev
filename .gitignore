@@ -1,0 +1,13 @@
+node_modules/
+dist/
+*.tgz
+.DS_Store
+
+# Real configs may carry the TypeSafe API key — never commit them.
+jev.yaml
+jev.yml
+jev.json
+jev.config.yaml
+jev.config.yml
+jev.config.json
+.idea/

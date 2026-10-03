@@ -1,0 +1,12 @@
+# Copy to jev.yaml next to your opencode config (or set JEV_CONFIG_PATH).
+# REQUIRED — or use the TYPESAFE_API_KEY environment variable instead.
+apiKey: "apikey_REPLACE_ME"
+
+# Optional. TypeSafe System-1 endpoint.
+# apiUrl: "https://api.typesafe.ai/v1/systemone"
+
+# Optional. Confidence (0-1) required before Jev's pick is enforced. Default 0.75.
+# minConfidence: 0.75
+
+# Optional. Jev model. Default "jev-latest".
+# model: "jev-latest"
