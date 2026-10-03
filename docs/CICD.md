@@ -112,6 +112,12 @@ lint.
 > Do not edit the release PR's version or changelog by hand — the action
 > regenerates the PR body from the commits. Close/reopen or let the next push
 > to `main` recreate it instead.
+>
+> Never **rename the release PR's branch** — `release-please--branches--main…`
+> is how the action finds "its" PR. Renaming orphans it: the next push opens a
+> second release PR and the stale one never self-heals. Also don't rely on
+> editing the PR title — it gets regenerated from the pending commits on every
+> run.
 
 ### Reverting a merged PR
 
