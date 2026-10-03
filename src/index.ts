@@ -29,10 +29,9 @@ import { Plugin } from "@opencode/plugin";
  * Responses (/responses). Responses-API built-in tools (web_search,
  * namespaces, ...) are never offered to Jev since tool_choice cannot pin them.
  *
- * Safety: low confidence, "respond_to_user", reasoning/thinking-mode requests
- * (providers reject forced tool_choice there — verified live), network
- * failure, timeout, or any parse error leaves the request untouched — Jev
- * must never break a session. All failures are swallowed and mirrored to
+ * Safety: low confidence, "respond_to_user", payloads with no usable tools or
+ * an already-pinned tool_choice, network failure, timeout, or any parse error
+ * leaves the request untouched — Jev must never break a session. All failures are swallowed and mirrored to
  * /tmp/opencode-jev.log.
  *
  * Config sources (first defined value wins per field):
@@ -48,7 +47,10 @@ import { Plugin } from "@opencode/plugin";
  *
  * Logging: OpenCode's background service discards plugin console output, so
  * every decision is appended to /tmp/opencode-jev.log (override with
- * JEV_DEBUG_FILE). JEV_DEBUG=1 additionally echoes to stdout.
+ * JEV_DEBUG_FILE). JEV_DEBUG=1 additionally echoes to stdout. Each request
+ * ends in exactly one tagged line: "apply:" (tools trimmed to jev's choice)
+ * or "bypass:" (request untouched, with the reason). See docs/DEVELOPMENT.md
+ * "Reading the decision log" for the full line-by-line interpretation.
  */
 
 interface JevConfig {
@@ -392,15 +394,21 @@ async function routePayload(
   // Invalid key latched earlier: skip the round-trip, zero added latency.
   if (jevAuthFailed) return false;
   const answer = await askJev(cfg, stateOf(payload), names);
-  if (
-    !answer ||
-    answer.choice === "respond_to_user" ||
-    !names.includes(answer.choice) ||
-    answer.confidence < cfg.minConfidence
-  ) {
-    log(
-      `pass-through${answer ? ` (jev: ${answer.choice}@${answer.confidence})` : " (jev unavailable)"}`,
-    );
+  if (!answer) {
+    log("bypass: jev unavailable (see preceding 'jev ...' error line) — full tool list sent untouched");
+    return false;
+  }
+  const at = `${answer.choice}@${answer.confidence}`;
+  if (answer.choice === "respond_to_user") {
+    log(`bypass: jev says answer directly (${at}) — nothing to trim to, full tool list sent untouched`);
+    return false;
+  }
+  if (!names.includes(answer.choice)) {
+    log(`bypass: jev choice ${at} is not among this request's tools — full tool list sent untouched`);
+    return false;
+  }
+  if (answer.confidence < cfg.minConfidence) {
+    log(`bypass: jev choice ${at} below minConfidence ${cfg.minConfidence} — full tool list sent untouched`);
     return false;
   }
   // Force by trimming the candidate set to the chosen tool instead of pinning
@@ -419,11 +427,11 @@ async function routePayload(
     );
   });
   if (tools.length === 0) {
-    log(`pass-through (chosen tool ${answer.choice} not found in payload)`);
+    log(`bypass: jev choice ${at} listed but missing from payload — full tool list sent untouched`);
     return false;
   }
   payload.tools = tools;
-  log(`forced ${answer.choice} confidence=${answer.confidence}`);
+  log(`apply: tools trimmed to ${answer.choice} only (${at} >= minConfidence ${cfg.minConfidence})`);
   return true;
 }
 

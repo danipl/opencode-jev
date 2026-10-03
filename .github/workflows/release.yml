@@ -3,6 +3,12 @@ name: Release
 on:
   push:
     tags: ["v*"]
+  workflow_call:
+    inputs:
+      ref:
+        description: Tag to publish (e.g. v0.2.0)
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -13,12 +19,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org
       - run: npm ci
       - run: npm run build
-      - run: npm publish --provenance --access public
+      - name: Stamp version from tag
+        run: |
+          REF="${{ inputs.ref || github.ref_name }}"
+          npm version "${REF#v}" --no-git-tag-version --allow-same-version
+      - run: npm publish --provenance --access public --tag latest
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

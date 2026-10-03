@@ -1,0 +1,57 @@
+<svg width="1280" height="320" viewBox="0 0 1280 320" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="jev — System-1 tool routing for OpenCode">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1280" y2="320" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0b0b14"/>
+      <stop offset="1" stop-color="#12101f"/>
+    </linearGradient>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#22d3ee"/>
+      <stop offset="0.55" stop-color="#818cf8"/>
+      <stop offset="1" stop-color="#e879f9"/>
+    </linearGradient>
+    <radialGradient id="glowA" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#22d3ee" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowB" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#e879f9" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#e879f9" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#ffffff" stroke-opacity="0.035"/>
+    </pattern>
+  </defs>
+
+  <rect width="1280" height="320" fill="url(#bg)"/>
+  <rect width="1280" height="320" fill="url(#grid)"/>
+  <ellipse cx="240" cy="160" rx="360" ry="220" fill="url(#glowA)"/>
+  <ellipse cx="1080" cy="180" rx="380" ry="230" fill="url(#glowB)"/>
+
+  <!-- wordmark -->
+  <text x="96" y="182" font-family="ui-monospace, 'SF Mono', 'Cascadia Code', Menlo, Consolas, monospace" font-size="104" font-weight="700" letter-spacing="-2" fill="url(#brand)">jev</text>
+  <circle cx="292" cy="176" r="9" fill="#22d3ee"/>
+
+  <!-- tagline -->
+  <text x="98" y="228" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="27" font-weight="600" fill="#e2e8f0">System-1 tool routing for OpenCode</text>
+  <text x="98" y="264" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="18" fill="#94a3b8">A cheap, fast model picks the next tool — your reasoning model just executes.</text>
+
+  <!-- trim motif: 12 tools -> 1 -->
+  <g font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace" font-size="17">
+    <rect x="880" y="70" width="304" height="150" rx="14" fill="#ffffff" fill-opacity="0.04" stroke="#ffffff" stroke-opacity="0.09"/>
+    <text x="904" y="102" fill="#64748b">tools: [12 schemas]</text>
+    <text x="904" y="130" fill="#22d3ee">jev: "edit" · conf 0.91</text>
+    <text x="904" y="158" fill="#64748b">tools: [1 schema]</text>
+    <text x="904" y="196" fill="#a78bfa">→ reasoner just executes</text>
+  </g>
+  <g stroke="url(#brand)" stroke-width="2.5" fill="none" stroke-linecap="round">
+    <path d="M820 145 H862"/>
+    <path d="M854 137 L864 145 L854 153"/>
+  </g>
+  <g fill="#334155">
+    <circle cx="770" cy="112" r="4"/><circle cx="788" cy="130" r="4"/><circle cx="770" cy="148" r="4"/>
+    <circle cx="788" cy="166" r="4"/><circle cx="770" cy="184" r="4"/><circle cx="752" cy="148" r="4"/>
+  </g>
+
+  <!-- bottom hairline -->
+  <rect x="0" y="316" width="1280" height="4" fill="url(#brand)" opacity="0.8"/>
+</svg>
