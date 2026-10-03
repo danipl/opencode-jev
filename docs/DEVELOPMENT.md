@@ -307,7 +307,7 @@ live.
 ### Packaging check (what npm users get)
 
 ```bash
-npm pack          # then: tar -tzf danipl-opencode-jev-0.0.0.tgz
+npm pack          # then: tar -tzf danipl-opencode-jev-<version>.tgz
 ```
 
 The tarball must contain `dist/index.js`, `index.js`, `README.md`, `LICENSE`,
@@ -339,7 +339,8 @@ covers the runtime; `npm pack` only guards the packaging contract.
    *silently*. Details in [CICD.md](./CICD.md) §1.
 
 3. Before pushing: `npm run typecheck && npm test && npm run build`.
-4. **Never** touch `package.json` `version` (permanent `0.0.0` placeholder),
+4. **Never** touch `package.json` `version` (release-please bumps it in the
+   release commit),
    `CHANGELOG.md`, or `.release-please-manifest.json` — release-please owns
    them; a PR editing them is rejected at review.
 
