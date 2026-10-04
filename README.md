@@ -9,7 +9,7 @@
 [![license](https://img.shields.io/github/license/danipl/opencode-jev?style=flat-square&label=license&labelColor=12101f&color=a78bfa)](./LICENSE)
 [![OpenCode V2](https://img.shields.io/badge/OpenCode-V2-e879f9?style=flat-square&labelColor=12101f)](https://opencode.ai)
 
-**Latest release: 1.1.0** <!-- x-release-please-version -->
+[![latest release](https://img.shields.io/badge/latest%20release-v1.1.0-e879f9?style=for-the-badge&labelColor=12101f&logo=github&logoColor=white)](https://github.com/danipl/opencode-jev/releases/latest) <!-- x-release-please-version -->
 
 **Your reasoning model should think about your problem — not about which of twelve tools to call.**
 `opencode-jev` puts TypeSafe's cheap, fast System-1 model in front of every inference request: it picks
