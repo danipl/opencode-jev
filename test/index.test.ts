@@ -13,7 +13,7 @@
 
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
@@ -345,6 +345,10 @@ test("12a. jev fetch rejects (network): unchanged, no throw", async () => {
   await holder.captured!(event); // must not throw
   assert.deepEqual(await bodyJson(event), payload);
   assert.equal(calls.length, 1);
+  // Log contract: a thrown round-trip still ends in exactly one bypass line.
+  const logText = readFileSync(process.env.JEV_DEBUG_FILE!, "utf8");
+  assert.match(logText, /\[jev\] jev round-trip threw: /);
+  assert.match(logText, /\[jev\] bypass: jev unavailable/);
 });
 
 test("12b. jev HTTP 500: unchanged", async () => {
@@ -441,4 +445,8 @@ test("17. jev timeout aborts: passthrough, no hang", async () => {
   await holder.captured!(event); // resolves via abort, must not hang or throw
   assert.deepEqual(await bodyJson(event), payload);
   assert.equal(calls.length, 1);
+  // Log contract: a timeout abort still ends in exactly one bypass line.
+  const logText = readFileSync(process.env.JEV_DEBUG_FILE!, "utf8");
+  assert.match(logText, /\[jev\] jev round-trip threw: /);
+  assert.match(logText, /\[jev\] bypass: jev unavailable/);
 });
