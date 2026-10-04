@@ -6,6 +6,9 @@ description: >
   consent gates), implement after approval, test, commit, push, open PR, link.
   Use for "analyze/fix/close issue #N", "work the opened issues",
   "answer in the issue thread".
+compatibility: Requires git and gh (GitHub CLI) authenticated
+metadata:
+  author: danipl
 ---
 
 # Issue Resolver
