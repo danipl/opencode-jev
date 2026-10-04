@@ -36,7 +36,9 @@ typecheck + test.
 1. **Never throw, never hang.** Every failure path logs and passes the original
    request through untouched.
 2. **Always hand back a rebuilt, readable `Request`** — provider bodies are
-   one-shot streams; this applies to *every* path, including passthroughs (`rebuildRequest` exists for exactly this).
+   one-shot streams; this applies to *every* path, including passthroughs (`rebuildRequest` exists for exactly this). The
+   original object may only come back when the body read or the rebuild itself
+   fails — `handleRequest` must never throw once the read has started.
 3. **Trim, don't pin.** Only the `tools` array is modified; `tool_choice` is
    never touched (providers reject forced `tool_choice` in thinking mode, HTTP 400).
 4. **Responses-API built-in tools** (`type !== "function"`) are never offered
