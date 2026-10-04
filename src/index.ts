@@ -474,9 +474,16 @@ async function handleRequest(
   if (!target || request.method.toUpperCase() !== "POST" || !request.body) {
     return request;
   }
-  // Provider bodies are one-shot streams: once read, the caller must get a
-  // readable Request back — even on every failure/passthrough path.
-  const text = await request.text();
+  // Provider bodies are one-shot streams: once the read starts, every path
+  // returns a rebuilt readable Request — the original comes back only when
+  // the read itself fails, in which case the body was unreadable anyway.
+  let text: string;
+  try {
+    text = await request.text();
+  } catch (error) {
+    log(`bypass: body read failed (${error}) — passing original request through`);
+    return request;
+  }
   try {
     const payload = JSON.parse(text) as Record<string, unknown>;
     if (payload && typeof payload === "object" && eligible(payload)) {
@@ -486,7 +493,12 @@ async function handleRequest(
   } catch (error) {
     log(`intercept failed, falling back to untouched request: ${error}`);
   }
-  return rebuildRequest(request, text);
+  try {
+    return rebuildRequest(request, text);
+  } catch (fallbackError) {
+    log(`rebuild fallback failed (${fallbackError}) — passing original through`);
+    return request;
+  }
 }
 
 /* ------------------------------------------------------------- entrypoint */

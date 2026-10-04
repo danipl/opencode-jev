@@ -450,3 +450,56 @@ test("17. jev timeout aborts: passthrough, no hang", async () => {
   assert.match(logText, /\[jev\] jev round-trip threw: /);
   assert.match(logText, /\[jev\] bypass: jev unavailable/);
 });
+
+test("18. rebuild fallback throws: original returned, no stranding escape", async () => {
+  const { calls, holder } = await setupPlugin();
+  assert.ok(holder.captured);
+  // Ineligible payload (no tools): body reads fine, only the final fallback
+  // rebuild runs. Patch globalThis.Request after the event is built so
+  // rebuildRequest's `new Request(...)` throws.
+  const event = postEvent(ANTHROPIC_URL, JSON.stringify({ model: "m" }));
+  const original = event.request;
+  const RealRequest = globalThis.Request;
+  globalThis.Request = (function throwingRequest() {
+    throw new TypeError("rebuild boom");
+  }) as unknown as typeof Request;
+  try {
+    await holder.captured!(event); // must not throw out of handleRequest
+  } finally {
+    globalThis.Request = RealRequest;
+  }
+  // Fallback hands back the original object, and the hook-level catch was
+  // never reached: handleRequest absorbed the rebuild failure itself.
+  assert.equal(event.request, original);
+  assert.equal(calls.length, 0);
+  const logText = readFileSync(process.env.JEV_DEBUG_FILE!, "utf8");
+  assert.match(logText, /\[jev\] rebuild fallback failed \(/);
+  assert.doesNotMatch(logText, /http\.request hook failed/);
+});
+
+test("19. body read fails (stream errors mid-read): original returned, no jev call", async () => {
+  const { calls, holder } = await setupPlugin();
+  assert.ok(holder.captured);
+  // duplex:"half" is required for a ReadableStream body; erroring the
+  // controller in start() makes request.text() reject mid-read — the
+  // body-read guard path.
+  const event = {
+    kind: "primary",
+    request: new Request(ANTHROPIC_URL, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      duplex: "half",
+      body: new ReadableStream({
+        start(controller) {
+          controller.error(new Error("boom"));
+        },
+      }),
+    }),
+  };
+  const original = event.request;
+  await holder.captured!(event); // must not throw
+  assert.equal(event.request, original); // guard hands back the original object
+  assert.equal(calls.length, 0); // no jev round-trip was made
+  const logText = readFileSync(process.env.JEV_DEBUG_FILE!, "utf8");
+  assert.match(logText, /\[jev\] bypass: body read failed/);
+});

@@ -250,9 +250,13 @@ Error/context lines that precede a `bypass: jev unavailable`:
 | `jev answer malformed` | Jev's JSON didn't parse into `{choice, confidence}`. |
 | `jev round-trip threw: ...` | The round-trip itself threw: fetch network error, timeout abort, or non-JSON body. |
 
-`intercept failed, falling back to untouched request: ...` stays as the generic safety net
-for unexpected plugin-side errors outside the Jev round-trip; the original body is re-sent
-byte-for-byte.
+Fallback lines that need no Jev decision (the request is sent with its tools
+untouched, or as-read): `bypass: body read failed (...)` (the body stream
+errored while being read; the original object is handed back because there is
+nothing readable to rebuild), `intercept failed, falling back to untouched
+request: ...` (unexpected plugin-side error; the original body is re-sent
+byte-for-byte), and `rebuild fallback failed (...)` (even the byte-for-byte
+rebuild threw; the consumed original is passed through as the last resort).
 
 Silent paths (no log line by design, request simply untouched):
 non-POST / non-target URLs, non-primary `event.kind` (title, compaction),
