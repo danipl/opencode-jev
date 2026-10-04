@@ -9,7 +9,7 @@
 [![license](https://img.shields.io/github/license/danipl/opencode-jev?style=flat-square&label=license&labelColor=12101f&color=a78bfa)](./LICENSE)
 [![OpenCode V2](https://img.shields.io/badge/OpenCode-V2-e879f9?style=flat-square&labelColor=12101f)](https://opencode.ai)
 
-**Latest release: 1.0.0** <!-- x-release-please-version -->
+**Latest release: 1.1.0** <!-- x-release-please-version -->
 
 **Your reasoning model should think about your problem — not about which of twelve tools to call.**
 `opencode-jev` puts TypeSafe's cheap, fast System-1 model in front of every inference request: it picks
@@ -78,7 +78,7 @@ The bare name tracks the **`latest`** dist-tag — every publish moves it, so a 
 version for reproducibility or to freeze a known-good release:
 
 ```jsonc
-{ "plugins": ["@danipl/opencode-jev@1.0.0"] } // x-release-please-version — exact version, never auto-updates
+{ "plugins": ["@danipl/opencode-jev@1.1.0"] } // x-release-please-version — exact version, never auto-updates
 ```
 
 Heads-up while pre-1.0: `feat:` releases (minor bumps) *can* change behavior. If that matters to

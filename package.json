@@ -1,6 +1,6 @@
 {
   "name": "@danipl/opencode-jev",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Route OpenCode tool selection through TypeSafe System-1 (Jev): a cheap fast model picks the next tool so the reasoning model executes instead of deliberating.",
   "keywords": [
     "opencode-plugin",
