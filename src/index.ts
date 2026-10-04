@@ -393,7 +393,14 @@ async function routePayload(
   if (names.length === 0) return false;
   // Invalid key latched earlier: skip the round-trip, zero added latency.
   if (jevAuthFailed) return false;
-  const answer = await askJev(cfg, stateOf(payload), names);
+  // A thrown round-trip (fetch network error, timeout abort, non-JSON body)
+  // must still end in the tagged "bypass:" line — log contract §5.
+  let answer: JevAnswer | undefined;
+  try {
+    answer = await askJev(cfg, stateOf(payload), names);
+  } catch (error) {
+    log(`jev round-trip threw: ${error}`);
+  }
   if (!answer) {
     log("bypass: jev unavailable (see preceding 'jev ...' error line) — full tool list sent untouched");
     return false;

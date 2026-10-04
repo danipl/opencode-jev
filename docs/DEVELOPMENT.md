@@ -248,7 +248,11 @@ Error/context lines that precede a `bypass: jev unavailable`:
 | `jev http 500` (or any non-401/403 status) | Transient provider failure — plugin keeps trying next request. |
 | `jev http 401 (invalid key, routing disabled)` | **Latched off.** Auth failed; all later requests bypass silently with zero jev round-trips and **no further log lines**. Fix the key and restart OpenCode. |
 | `jev answer malformed` | Jev's JSON didn't parse into `{choice, confidence}`. |
-| `intercept failed, falling back to untouched request: ...` | Unexpected plugin-side error; original body is re-sent byte-for-byte. |
+| `jev round-trip threw: ...` | The round-trip itself threw: fetch network error, timeout abort, or non-JSON body. |
+
+`intercept failed, falling back to untouched request: ...` stays as the generic safety net
+for unexpected plugin-side errors outside the Jev round-trip; the original body is re-sent
+byte-for-byte.
 
 Silent paths (no log line by design, request simply untouched):
 non-POST / non-target URLs, non-primary `event.kind` (title, compaction),
