@@ -100,7 +100,10 @@ On every push to `main`, `.github/workflows/release-please.yml` runs
   single PR titled `chore: release <version>` that contains:
   - a generated `CHANGELOG.md` entry,
   - the new version in the release-please manifest,
-  - the new version in `package.json` + `package-lock.json` (`release-type: node`).
+  - the new version in `package.json` + `package-lock.json` (`release-type: node`),
+  - the new version on the `x-release-please-version` lines of `README.md`
+    (`extra-files` generic updater — the "Latest release" header line and the
+    pinned `@danipl/opencode-jev@X.Y.Z` example).
 - Further qualifying commits merged to `main` are folded into the same open
   PR — its title and changelog update automatically.
 
@@ -177,7 +180,7 @@ release-please tags never double-publish).
 | --- | --- |
 | `.github/workflows/release-please.yml` | Runs the release-please action on `main`; chains npm publish on release |
 | `.github/workflows/release.yml` | Builds, stamps version from tag, publishes to npm |
-| `release-please-config.json` | Release strategy (node — bumps package.json/lock in the release commit, pre-major minor bumps, plain `v` tags) |
+| `release-please-config.json` | Release strategy (node — bumps package.json/lock in the release commit, pre-major minor bumps, plain `v` tags, `extra-files`: README.md version stamping) |
 | `.release-please-manifest.json` | Last-released version bookkeeping (drives next bump) |
 | `package.json` `version` | Bumped by release-please in each release commit — release-please owns it, never hand-edit |
 | `CHANGELOG.md` | Generated on merge of each release PR |

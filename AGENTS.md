@@ -49,8 +49,11 @@ typecheck + test.
 ## Hard rules
 
 - Never edit: `dist/` (build output), `package.json` `version` (bumped by
-  release-please in each release commit), `CHANGELOG.md`, `release-please-config.json`,
+  release-please in each release commit), `CHANGELOG.md`,
   `.release-please-manifest.json` — release-please owns all of these.
+  `release-please-config.json` is the human-owned *input* config: editing it is
+  allowed when release behaviour must change (e.g. `extra-files` stamps the
+  version lines in `README.md` marked `x-release-please-version`).
 - No new runtime dependencies without strong justification (currently: `yaml`
   only; `@opencode/plugin` is a peer dep).
 - Module-level state (captured `fetch`, debug constants, auth latch) is read at **module load**; tests isolate via
