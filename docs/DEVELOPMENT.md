@@ -63,7 +63,10 @@ inspection` → `Jev client` → `interception core` → `transport` → `entryp
    mode (HTTP 400, verified live). Only the `tools` array is modified;
    `tool_choice` is passed through byte-for-byte.
 4. **Responses-API built-ins are never offered to Jev** (`toolNames` skips
-   `type !== "function"`) — they cannot be trimmed-to-one either.
+   `type !== "function"`) — they cannot be trimmed-to-one and are never
+   removed by a trim either: they always pass through (issue #12 verdict).
+   Consequence: a payload with at most one function tool has nothing left for
+   Jev to decide and skips the round-trip.
 5. **Unconfigured = invisible.** No hook, no log file touched, no latency.
 6. **The 401/403 latch** (`jevAuthFailed`) disables routing for the process
    lifetime; don't turn it into a per-request retry.
@@ -238,6 +241,7 @@ grep -c 'bypass:' /tmp/opencode-jev.log   # requests handed to the LLM untouched
 | Line | Meaning | What the reasoning model received |
 | --- | --- | --- |
 | `apply: tools trimmed to X only (X@0.91 >= minConfidence 0.75)` | **jev acted.** Its pick cleared the threshold. | Only tool `X` — it executes instead of deciding. |
+| `apply: tools trimmed to X (+ N built-ins kept) (...)` | Same, on Responses-API payloads carrying built-ins. | Tool `X` plus the untouched built-ins — Jev never removes what it never saw. |
 | `bypass: jev choice X@0.53 below minConfidence 0.8 — ...` | Jev picked a tool but wasn't sure enough. | Full tool list, normal deliberation. |
 | `bypass: jev says answer directly (respond_to_user@0.81) — ...` | Jev voted "no tool needed". Never forces this — trimming has nothing to target, and stripping all tools on a cheap model's word is too destructive. | Full tool list; the big model may still answer directly or use a tool. |
 | `bypass: jev choice X is not among this request's tools — ...` | Jev hallucinated/held a stale tool name. | Full tool list. |
@@ -265,13 +269,15 @@ rebuild threw; the consumed original is passed through as the last resort).
 
 Silent paths (no log line by design, request simply untouched):
 non-POST / non-target URLs, non-primary `event.kind` (title, compaction),
-payloads with no usable tools, payloads whose single function tool is the only entry in `tools`, and everything after the 401 latch. If the
+payloads with at most one function tool (built-ins survive the trim, so no
+trim can change anything), and everything after the 401 latch. If the
 log goes quiet mid-session, check for a latch line first.
 
 ### Verify trimming actually happened
 
 Start any OpenCode session that triggers tool use; in the log, `apply:`
 means the outbound request's `tools` array was trimmed to the chosen tool
+plus any Responses-API built-ins (which are never removed)
 and the model had no choice. Confirm the session behaves normally — that's
 the whole safety contract.
 
@@ -302,7 +308,8 @@ export JEV_API_URL=http://localhost:9999 TYPESAFE_API_KEY=***
 
 The echoed body is exactly what Jev sees (`state`, `criteria`, `model`).
 Returning `"read"` at 0.99 makes the log show `apply: tools trimmed to read
-only ...` on every request that offers the `read` tool — proof the trim path
+only ...` on every request that offers `read` alongside another function tool
+(the lone-candidate case skips the round-trip) — proof the trim path
 works end to end without a network dependency — keep the trial session
 short, every tool turn is now a `read`. Change `choice` to
 `"respond_to_user"` or `confidence` to `0.1` to watch the `bypass:` paths

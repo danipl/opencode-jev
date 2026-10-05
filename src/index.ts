@@ -268,18 +268,26 @@ function targetOf(url: string): Target | undefined {
   return undefined;
 }
 
+// Responses-API built-ins (web_search, file_search, namespace groups, ...):
+// typed entries that are not plain function tools. Chat/Anthropic tools carry
+// no `type` and are NOT built-ins.
+function isBuiltIn(tool: unknown): boolean {
+  if (typeof tool !== "object" || tool === null) return false;
+  const type = (tool as { type?: unknown }).type;
+  return type !== undefined && type !== "function";
+}
+
 function toolNames(tools: unknown[]): string[] {
   const names: string[] = [];
   for (const tool of tools) {
     if (typeof tool !== "object" || tool === null) continue;
+    // Responses API built-ins cannot be pinned via tool_choice, so only
+    // plain function tools become candidates.
+    if (isBuiltIn(tool)) continue;
     const record = tool as {
       name?: unknown;
-      type?: unknown;
       function?: { name?: unknown };
     };
-    // Responses API built-ins (web_search, file_search, namespace groups, ...)
-    // cannot be pinned via tool_choice, so only keep plain function tools.
-    if (record.type !== undefined && record.type !== "function") continue;
     const name =
       typeof record.name === "string"
         ? record.name
@@ -406,11 +414,10 @@ async function routePayload(
   payload: Record<string, unknown>,
 ): Promise<boolean> {
   const names = toolNames(payload.tools as unknown[]);
-  // No usable candidate, or a lone candidate with nothing else in the payload:
-  // trimming can only reproduce the original tools array, so there is no
-  // decision for Jev and the round-trip would be pure added latency.
-  // (A built-in alongside the lone tool still counts — trimming drops it.)
-  if (names.length === 0 || (names.length === 1 && (payload.tools as unknown[]).length === 1)) {
+  // No usable candidate, or a lone candidate: trimming can only reproduce the
+  // original tools array — built-ins always pass through untouched — so there
+  // is no decision for Jev and the round-trip would be pure added latency.
+  if (names.length <= 1) {
     return false;
   }
   // Invalid key latched earlier: skip the round-trip, zero added latency.
@@ -451,6 +458,9 @@ async function routePayload(
       name?: unknown;
       function?: { name?: unknown };
     };
+    // Invariant 4 (issue #12 verdict): built-ins are never offered to Jev,
+    // so Jev must never remove them either — they always survive the trim.
+    if (isBuiltIn(tool)) return true;
     return (
       record.name === answer.choice || record.function?.name === answer.choice
     );
@@ -460,7 +470,14 @@ async function routePayload(
     return false;
   }
   payload.tools = tools;
-  log(`apply: tools trimmed to ${answer.choice} only (${at} >= minConfidence ${cfg.minConfidence})`);
+  const keptBuiltIns = tools.filter(isBuiltIn).length;
+  log(
+    `apply: tools trimmed to ${answer.choice}${
+      keptBuiltIns
+        ? ` (+ ${keptBuiltIns} built-in${keptBuiltIns === 1 ? "" : "s"} kept)`
+        : " only"
+    } (${at} >= minConfidence ${cfg.minConfidence})`,
+  );
   return true;
 }
 
