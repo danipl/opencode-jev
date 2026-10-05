@@ -74,7 +74,8 @@ inspection` → `Jev client` → `interception core` → `transport` → `entryp
 `./.opencode/jev.{yaml,json}` → `~/.config/jev/config.{yaml,json}` →
 plugin `options` (directory-package registrations only) → env (`TYPESAFE_API_KEY` / `JEV_API_URL` /
 `JEV_MIN_CONFIDENCE`).
-`JEV_MODEL` / `JEV_TIMEOUT_MS` are env-only extras. Constants like
+`JEV_MODEL` / `JEV_TIMEOUT_MS` are env fallbacks for the `model` / `timeoutMs`
+fields (non-positive or bogus `timeoutMs` counts as unset). Constants like
 `JEV_DEBUG_FILE` are captured at **module load**, not at setup.
 
 ## 3. Dev setup
@@ -204,10 +205,12 @@ export TYPESAFE_API_KEY="***"   # also: JEV_API_URL, JEV_MIN_CONFIDENCE
 
 Env vars must be visible to the **OpenCode server process** — export them in
 the shell you launch `opencode` from (a macOS GUI-launched app won't see your
-zsh exports; use route A or B there). The debug/behavior knobs
-`JEV_MODEL`, `JEV_TIMEOUT_MS`, `JEV_DEBUG`, `JEV_DEBUG_FILE`,
-`JEV_DEBUG_MAX_BYTES` are **env-only**, read once at module load — put them
-in the shell you start OpenCode from.
+zsh exports; use route A or B there). The debug knobs `JEV_DEBUG`,
+`JEV_DEBUG_FILE`, `JEV_DEBUG_MAX_BYTES` are **env-only**, read once at module
+load — put them in the shell you start OpenCode from. `JEV_MODEL` /
+`JEV_TIMEOUT_MS` are env fallbacks for the `model` / `timeoutMs` config
+fields — a config-file value wins over them; they are read at setup, not
+module load.
 
 ### Watch it work
 

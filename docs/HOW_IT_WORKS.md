@@ -130,7 +130,8 @@ with N tool iterations and T tool schemas saves roughly `(N_applied) ×
 - **Smaller request = faster prefill.** Fewer input tokens means less
   prefill work at the provider, every iteration.
 - **The Jev round-trip is the only added latency** — and it's bounded:
-  `JEV_TIMEOUT_MS` caps it (default 2000 ms worst case), and a Jev miss
+  `timeoutMs` caps it (env `JEV_TIMEOUT_MS` fallback; default 2000 ms worst
+  case), and a Jev miss
   (timeout/error/low confidence) costs at most that one round-trip, never a
   retry storm.
 - **After a bad API key (401/403) the plugin latches off** — zero added
@@ -155,7 +156,7 @@ session*. The request is sent untouched when:
 - Jev's pick isn't in this request's tool list
 - The request already pins a tool (`tool_choice` is an object or `"none"`) or
   carries no usable tools
-- Jev times out (≤ `JEV_TIMEOUT_MS`, default 2 s), errors, returns malformed
+- Jev times out (≤ `timeoutMs`, default 2 s), errors, returns malformed
   JSON, or the key is invalid
 - The traffic isn't the agent loop (`event.kind !== "primary"` — title
   generation, compaction)

@@ -10,3 +10,8 @@ apiKey: "apikey_REPLACE_ME"
 
 # Optional. Jev model. Default "jev-latest".
 # model: "jev-latest"
+
+# Optional. Jev round-trip timeout, milliseconds. Default 2000.
+# Non-positive or non-numeric values count as unset (lower layer, then env
+# JEV_TIMEOUT_MS, then default).
+# timeoutMs: 2000
