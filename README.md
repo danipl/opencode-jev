@@ -133,18 +133,36 @@ Jev must never break a session. The request passes through **untouched** on: low
 failure, timeout, parse errors, or an invalid API key (latched off after the first 401/403 — zero
 added latency afterwards). Only primary agent-loop requests are considered
 (`event.kind === "primary"`); title/compaction traffic is skipped. Responses-API built-in tools
-(`type !== "function"`) are never offered to Jev and never trimmed to.
+(`type !== "function"`) are never offered to Jev, never trimmed to, and never removed by a trim —
+they always survive (issue #12 verdict: Jev may only demote function tools).
 
 ### Reading the decision log
 
 Every decision is appended to the debug log — `tail -f /tmp/opencode-jev.log` to watch routing
 live. Each request ends in one tagged line:
 
-- **`apply:`** — Jev acted; tools trimmed to its pick.
+- **`apply:`** — Jev acted; tools trimmed to its pick (+ any built-ins kept).
 - **`bypass:`** — request untouched, with the reason.
 
 Line-by-line interpretation:
 [docs/DEVELOPMENT.md — "Reading the decision log"](./docs/DEVELOPMENT.md#reading-the-decision-log).
+
+## Privacy
+
+With routing active, every eligible request POSTs a compact snapshot to `apiUrl` (default
+`https://api.typesafe.ai/v1/systemone` — TypeSafe's endpoint; override with the `apiUrl` config
+field or `JEV_API_URL`). The snapshot contains:
+
+- **`state`** — the first user message plus the last 4 conversation turns, each turn capped at
+  2 KB and the whole payload at 8 KB. In a coding agent those turns routinely contain file
+  contents, tool output, and error messages — treat this like sending context to another model
+  provider.
+- **Tool names** — up to the first 254 names, offered as routing choices. Names only, never
+  schemas or descriptions.
+
+No `apiKey` configured = no hook registered = nothing ever leaves your machine. If conversation
+egress is not acceptable at all, leave the plugin unconfigured or point `apiUrl` at a self-hosted
+Jev-compatible endpoint.
 
 ## Development
 

@@ -42,7 +42,9 @@ typecheck + test.
 3. **Trim, don't pin.** Only the `tools` array is modified; `tool_choice` is
    never touched (providers reject forced `tool_choice` in thinking mode, HTTP 400).
 4. **Responses-API built-in tools** (`type !== "function"`) are never offered
-   to Jev and never trimmed to.
+   to Jev and never trimmed to — and they always survive the trim: Jev may
+   only demote function tools, never delete capabilities it was forbidden to
+   consider (issue #12 verdict).
 5. **Unconfigured = invisible.** No `apiKey` → no hook registered, no log file,
    zero latency.
 6. **The 401/403 latch** (`jevAuthFailed`) disables routing for the process

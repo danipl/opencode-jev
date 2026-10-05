@@ -256,7 +256,45 @@ test("6. openai chat format: matched via function.name", async () => {
   assert.equal(calls.length, 1);
 });
 
-test("7. responses format: built-ins excluded from criteria, trimmed by function.name", async () => {
+test("7. responses format: built-ins excluded from criteria, survive the trim", async () => {
+  const { calls, holder } = await setupPlugin(undefined, () =>
+    jevResponse(choice("shell", 0.95)),
+  );
+  assert.ok(holder.captured);
+  const payload = {
+    model: "gpt-x",
+    tools: [
+      { type: "web_search" },
+      { type: "function", function: { name: "shell" } },
+      { type: "function", function: { name: "read" } },
+    ],
+    input: [{ type: "message", role: "user", content: "run ls" }],
+  };
+  const url = "https://api.openai.com/v1/responses";
+  const event = jsonEvent(url, payload);
+  await holder.captured!(event);
+
+  const jevBody = JSON.parse(calls[0].init.body);
+  const criteriaKeys = Object.keys(jevBody.questions.next_tool.criteria);
+  assert.ok(criteriaKeys.includes("shell"));
+  assert.ok(criteriaKeys.includes("respond_to_user"));
+  assert.ok(!criteriaKeys.includes("web_search"));
+
+  // Issue #12 verdict: Jev may only demote function tools — a built-in it
+  // was never allowed to consider is never removed either.
+  const body = await bodyJson(event);
+  assert.deepEqual(body.tools, [
+    { type: "web_search" },
+    { type: "function", function: { name: "shell" } },
+  ]);
+  assert.deepEqual(body.input, payload.input);
+  assert.match(
+    readFileSync(process.env.JEV_DEBUG_FILE!, "utf8"),
+    /\[jev\] apply: tools trimmed to shell \(\+ 1 built-in kept\) \(shell@0\.95/,
+  );
+});
+
+test("7b. responses: lone function tool beside built-ins: passthrough, no fetch", async () => {
   const { calls, holder } = await setupPlugin(undefined, () =>
     jevResponse(choice("shell", 0.95)),
   );
@@ -272,16 +310,10 @@ test("7. responses format: built-ins excluded from criteria, trimmed by function
   const url = "https://api.openai.com/v1/responses";
   const event = jsonEvent(url, payload);
   await holder.captured!(event);
-
-  const jevBody = JSON.parse(calls[0].init.body);
-  const criteriaKeys = Object.keys(jevBody.questions.next_tool.criteria);
-  assert.ok(criteriaKeys.includes("shell"));
-  assert.ok(criteriaKeys.includes("respond_to_user"));
-  assert.ok(!criteriaKeys.includes("web_search"));
-
-  const body = await bodyJson(event);
-  assert.deepEqual(body.tools, [{ type: "function", function: { name: "shell" } }]);
-  assert.deepEqual(body.input, payload.input);
+  // Built-ins survive the trim, so a lone function candidate can only
+  // reproduce the payload — skip the round-trip entirely.
+  assert.deepEqual(await bodyJson(event), payload);
+  assert.equal(calls.length, 0);
 });
 
 test("8. responses with only built-in tools: passthrough, no fetch", async () => {
