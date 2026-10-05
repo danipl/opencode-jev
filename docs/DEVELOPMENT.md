@@ -260,7 +260,7 @@ rebuild threw; the consumed original is passed through as the last resort).
 
 Silent paths (no log line by design, request simply untouched):
 non-POST / non-target URLs, non-primary `event.kind` (title, compaction),
-payloads with no usable tools, and everything after the 401 latch. If the
+payloads with no usable tools, payloads whose single function tool is the only entry in `tools`, and everything after the 401 latch. If the
 log goes quiet mid-session, check for a latch line first.
 
 ### Verify trimming actually happened
