@@ -516,3 +516,51 @@ test("20. single function tool: passthrough, no fetch", async () => {
   assert.deepEqual(await bodyJson(event), payload);
   assert.equal(calls.length, 0); // nothing for jev to decide, no round-trip
 });
+
+test("21. config file timeoutMs beats env JEV_TIMEOUT_MS", async () => {
+  const cfgPath = path.join(tempDir(), "jev.yaml");
+  writeFileSync(cfgPath, "timeoutMs: 50\n");
+  const { calls, holder } = await setupPlugin(
+    {
+      TYPESAFE_API_KEY: "test-key",
+      JEV_CONFIG_PATH: cfgPath,
+      JEV_TIMEOUT_MS: "5000",
+    },
+    (_url, init) =>
+      new Promise((_resolve, reject) => {
+        init.signal.addEventListener("abort", () => {
+          reject(init.signal.reason ?? new Error("aborted"));
+        });
+      }),
+  );
+  assert.ok(holder.captured);
+  const payload = anthropicPayload();
+  const event = jsonEvent(ANTHROPIC_URL, payload);
+  const t0 = Date.now();
+  await holder.captured!(event); // must abort at ~50ms, not hang to env's 5000
+  const elapsed = Date.now() - t0;
+  assert.ok(elapsed < 1000, `expected ~50ms file timeout, took ${elapsed}ms`);
+  assert.deepEqual(await bodyJson(event), payload); // passthrough
+  assert.equal(calls.length, 1);
+});
+
+test("22. bogus config timeoutMs (0 / non-numeric): default used, routes normally", async () => {
+  for (const bogus of ["0", '"abc"']) {
+    const cfgPath = path.join(tempDir(), "jev.yaml");
+    writeFileSync(cfgPath, `timeoutMs: ${bogus}\n`);
+    const { calls, holder } = await setupPlugin(
+      { TYPESAFE_API_KEY: "test-key", JEV_CONFIG_PATH: cfgPath },
+      () => jevResponse(choice("bash", 0.95)),
+    );
+    assert.ok(holder.captured);
+    const payload = anthropicPayload();
+    const event = jsonEvent(ANTHROPIC_URL, payload);
+    await holder.captured!(event); // no hang, no throw
+    // Non-positive/NaN counts as unset -> default 2000ms applies, so the
+    // instant stub answer arrives and the trim happens (a 0ms timeout would
+    // abort before the response and passthrough instead).
+    const body = await bodyJson(event);
+    assert.deepEqual(body.tools, [{ name: "bash", input_schema: {} }]);
+    assert.equal(calls.length, 1);
+  }
+});

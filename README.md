@@ -113,10 +113,15 @@ Config sources — first defined value wins per field:
 5. plugin options (directory-package registrations only)
 6. env `TYPESAFE_API_KEY` / `JEV_API_URL` / `JEV_MIN_CONFIDENCE`
 
+Config-file fields: `apiKey`, `apiUrl`, `minConfidence`, `model`, `timeoutMs`
+(milliseconds; non-positive or bogus values count as unset) — see
+[jev.yaml.example](./jev.yaml.example). `JEV_MODEL` / `JEV_TIMEOUT_MS` are env
+fallbacks for `model` / `timeoutMs`.
+
 | Env var | Default | Meaning |
 | --- | --- | --- |
-| `JEV_MODEL` | `jev-latest` | Jev model id |
-| `JEV_TIMEOUT_MS` | `2000` | Jev round-trip timeout |
+| `JEV_MODEL` | `jev-latest` | Jev model id (fallback for `model`) |
+| `JEV_TIMEOUT_MS` | `2000` | Jev round-trip timeout (fallback for `timeoutMs`) |
 | `JEV_DEBUG_FILE` | `/tmp/opencode-jev.log` | decision log path |
 | `JEV_DEBUG` | — | `1` echoes the log to stdout |
 | `JEV_DEBUG_MAX_BYTES` | `262144` | log rotation cap (one `.1` backup) |

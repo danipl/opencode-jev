@@ -43,7 +43,8 @@ import { Plugin } from "@opencode/plugin";
  *   6. plugin options (ctx.options; only delivered when registered as a
  *      directory package under "plugins", not for auto-discovered files)
  *   7. env TYPESAFE_API_KEY / JEV_API_URL / JEV_MIN_CONFIDENCE
- * Extras: JEV_MODEL (default "jev-latest"), JEV_TIMEOUT_MS (default 2000).
+ * Env fallbacks: JEV_MODEL (for `model`), JEV_TIMEOUT_MS (for `timeoutMs`,
+ * default 2000). Non-positive/bogus `timeoutMs` in a layer counts as unset.
  *
  * Logging: OpenCode's background service discards plugin console output, so
  * every decision is appended to /tmp/opencode-jev.log (override with
@@ -199,11 +200,20 @@ function pickString(layers: RawConfig[], key: string): string | undefined {
   return undefined;
 }
 
-function pickNumber(layers: RawConfig[], key: string): number | undefined {
+function pickNumber(
+  layers: RawConfig[],
+  key: string,
+  validate: (value: number) => boolean = () => true,
+): number | undefined {
   for (const layer of layers) {
     const raw = layer[key];
     const value = typeof raw === "string" ? Number(raw) : raw;
-    if (typeof value === "number" && Number.isFinite(value)) return value;
+    if (
+      typeof value === "number" &&
+      Number.isFinite(value) &&
+      validate(value)
+    )
+      return value;
   }
   return undefined;
 }
@@ -226,7 +236,9 @@ async function loadConfig(
     apiKey,
     apiUrl: pickString(layers, "apiUrl") ?? DEFAULT_API_URL,
     minConfidence: Math.min(Math.max(confidence, 0), 1),
-    timeoutMs: positiveIntFromEnv("JEV_TIMEOUT_MS", DEFAULT_TIMEOUT_MS),
+    timeoutMs:
+      pickNumber(layers, "timeoutMs", (v) => v > 0) ??
+      positiveIntFromEnv("JEV_TIMEOUT_MS", DEFAULT_TIMEOUT_MS),
     model:
       pickString(layers, "model") ?? process.env.JEV_MODEL ?? DEFAULT_MODEL,
   };
