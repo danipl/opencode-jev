@@ -390,7 +390,13 @@ async function routePayload(
   payload: Record<string, unknown>,
 ): Promise<boolean> {
   const names = toolNames(payload.tools as unknown[]);
-  if (names.length === 0) return false;
+  // No usable candidate, or a lone candidate with nothing else in the payload:
+  // trimming can only reproduce the original tools array, so there is no
+  // decision for Jev and the round-trip would be pure added latency.
+  // (A built-in alongside the lone tool still counts — trimming drops it.)
+  if (names.length === 0 || (names.length === 1 && (payload.tools as unknown[]).length === 1)) {
+    return false;
+  }
   // Invalid key latched earlier: skip the round-trip, zero added latency.
   if (jevAuthFailed) return false;
   // A thrown round-trip (fetch network error, timeout abort, non-JSON body)

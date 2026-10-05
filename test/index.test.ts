@@ -503,3 +503,16 @@ test("19. body read fails (stream errors mid-read): original returned, no jev ca
   const logText = readFileSync(process.env.JEV_DEBUG_FILE!, "utf8");
   assert.match(logText, /\[jev\] bypass: body read failed/);
 });
+
+test("20. single function tool: passthrough, no fetch", async () => {
+  const { calls, holder } = await setupPlugin();
+  assert.ok(holder.captured);
+  const payload = {
+    ...anthropicPayload(),
+    tools: [{ name: "read", input_schema: {} }],
+  };
+  const event = jsonEvent(ANTHROPIC_URL, payload);
+  await holder.captured!(event);
+  assert.deepEqual(await bodyJson(event), payload);
+  assert.equal(calls.length, 0); // nothing for jev to decide, no round-trip
+});
