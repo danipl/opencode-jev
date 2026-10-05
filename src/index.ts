@@ -339,6 +339,10 @@ async function askJev(
   state: string,
   names: string[],
 ): Promise<JevAnswer | undefined> {
+  if (names.length > MAX_CRITERIA - 1)
+    log(
+      `note: ${names.length} tools exceed criteria cap ${MAX_CRITERIA - 1} — first ${MAX_CRITERIA - 1} offered to jev`,
+    );
   const criteria: Record<string, string> = {
     respond_to_user: "Task is complete, or clarification from user is required",
   };
