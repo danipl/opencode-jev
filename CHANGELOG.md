@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.2.0](https://github.com/danipl/opencode-jev/compare/v1.1.0...v1.2.0) (2026-10-05)
+
+
+### Features
+
+* log note line when the tool list exceeds the criteria cap ([#25](https://github.com/danipl/opencode-jev/issues/25)) ([81f8fae](https://github.com/danipl/opencode-jev/commit/81f8faecdc918899102c10bdc479cd34de51a1f2))
+* make timeoutMs file-configurable like every other knob ([#24](https://github.com/danipl/opencode-jev/issues/24)) ([038195f](https://github.com/danipl/opencode-jev/commit/038195f0c37c866df5475ce8764b57dc27ed3c04)), closes [#10](https://github.com/danipl/opencode-jev/issues/10)
+* skip the Jev round-trip when the lone candidate tool makes any trim a no-op ([#22](https://github.com/danipl/opencode-jev/issues/22)) ([90994a9](https://github.com/danipl/opencode-jev/commit/90994a964d61f42f775699fa794d366f8bd35fb1))
+
+
+### Bug Fixes
+
+* preserve Responses-API built-ins through the trim ([#26](https://github.com/danipl/opencode-jev/issues/26)) ([56b944c](https://github.com/danipl/opencode-jev/commit/56b944c5dac8d4e16e2f3ecb1421c3d2c1b9819b))
+
 ## [1.1.0](https://github.com/danipl/opencode-jev/compare/v1.0.0...v1.1.0) (2026-10-04)
 
 
