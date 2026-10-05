@@ -244,10 +244,12 @@ grep -c 'bypass:' /tmp/opencode-jev.log   # requests handed to the LLM untouched
 | `bypass: jev choice X listed but missing from payload — ...` | Name passed the criteria list but matched no payload entry (format mismatch edge case). | Full tool list. |
 | `bypass: jev unavailable (see preceding 'jev ...' error line) — ...` | The round-trip failed; the **preceding** error line names why. | Full tool list. |
 
-Error/context lines that precede a `bypass: jev unavailable`:
+Error/context lines that precede a `bypass: jev unavailable`, plus the
+`note:` line (which can precede **any** tagged line, `apply:` included):
 
 | Line | Meaning |
 | --- | --- |
+| `note: N tools exceed criteria cap 254 — first 254 offered to jev` | Payload has more than 254 function tools; the excess is invisible to Jev's choice (a pick among the kept tools still trims correctly). Operator awareness only — behavior unchanged. |
 | `jev http 500` (or any non-401/403 status) | Transient provider failure — plugin keeps trying next request. |
 | `jev http 401 (invalid key, routing disabled)` | **Latched off.** Auth failed; all later requests bypass silently with zero jev round-trips and **no further log lines**. Fix the key and restart OpenCode. |
 | `jev answer malformed` | Jev's JSON didn't parse into `{choice, confidence}`. |

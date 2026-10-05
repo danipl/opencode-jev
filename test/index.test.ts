@@ -564,3 +564,26 @@ test("22. bogus config timeoutMs (0 / non-numeric): default used, routes normall
     assert.equal(calls.length, 1);
   }
 });
+
+test("23. 260 tools: criteria truncated to first 254 + note logged, trim still applies", async () => {
+  const { calls, holder } = await setupPlugin(undefined, () =>
+    jevResponse(choice("tool_0", 0.99)),
+  );
+  assert.ok(holder.captured);
+  const payload = anthropicPayload();
+  payload.tools = Array.from({ length: 260 }, (_, i) => ({
+    name: `tool_${i}`,
+    input_schema: {},
+  }));
+  const event = jsonEvent(ANTHROPIC_URL, payload);
+  await holder.captured!(event);
+  const jevBody = JSON.parse(calls[0].init.body);
+  const criteria = jevBody.questions.next_tool.criteria;
+  // 254 kept tools + the reserved respond_to_user slot; tool_254..259 invisible.
+  assert.equal(Object.keys(criteria).length, 255); // MAX_CRITERIA: 254 tools + respond_to_user
+  assert.ok("tool_253" in criteria);
+  assert.ok(!("tool_254" in criteria));
+  const logText = readFileSync(process.env.JEV_DEBUG_FILE!, "utf8");
+  assert.match(logText, /\[jev\] note: 260 tools exceed criteria cap 254/);
+  assert.match(logText, /\[jev\] apply: tools trimmed to tool_0/);
+});
